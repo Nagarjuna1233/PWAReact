@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Auth from '../modules/Auth';
 import LoginForm from '../components/LoginForm.jsx';
-import {LOGIN_URL} from '../constants/LoginConstants';
+import LOGIN_CONS from '../constants/LoginConstants';
 
 
 
@@ -56,9 +56,10 @@ class LoginPage extends React.Component {
     console.log('form data ',JSON.stringify(validFormRes));
     if(validFormRes.success)
     {
+    console.log('login url ',LOGIN_CONS.LOGIN_URL+'&username='+email+'&password='+password);
     // create an AJAX request
     const xhr = new XMLHttpRequest();
-    xhr.open('post', LOGIN_URL);
+    xhr.open('post',LOGIN_CONS.LOGIN_URL+'&username='+email+'&password='+password);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xhr.responseType = 'json';
     xhr.addEventListener('load', () => {
@@ -71,18 +72,21 @@ class LoginPage extends React.Component {
         });
 
         // save the token
-        Auth.authenticateUser(xhr.response.token);
+        Auth.authenticateUser(xhr.response.access_token);
 
 
         // change the current URL to /
         this.context.router.replace('/');
       } else {
         // failure
-
         // change the component state
         const errors ={};
-        errors.summary = 'innernel error in server';
-
+        if (xhr.status === 400||xhr.status === 402){
+            errors.summary = 'Invalid user';
+        }
+else{
+   errors.summary = 'innernel error in server';
+}
         this.setState({
           errors
         });
@@ -144,7 +148,6 @@ class LoginPage extends React.Component {
  *                   errors tips, and a global message for the whole form.
  */
 function validateLoginForm(payload) {
-  debugger;
   const errors = {};
   let isFormValid = true;
   let message = '';
