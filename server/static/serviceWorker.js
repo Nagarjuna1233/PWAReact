@@ -32,29 +32,46 @@ self.addEventListener('install', function (event) {
 */
 
 //Adding `fetch` event listener
-self.addEventListener('fetch', function (event) {
-  var request = event.request;
-  //Tell the browser to wait for newtwork request and respond with below
-  event.respondWith(
-    //If request is already in cache, return it
-    caches.match(request).then(function(response) {
-      if (response) {
-        console.info('request loading from cache')
-        return response;
-      }
-      //if request is not cached, add it to cache
-      return fetch(request).then(function(response) {
+// self.addEventListener('fetch', function (event) {
+//   var request = event.request;
+//   //Tell the browser to wait for newtwork request and respond with below
+//   event.respondWith(
+//     //If request is already in cache, return it
+//     caches.match(request).then(function(response) {
+//       if (response) {
+//         console.info('request loading from cache')
+//         return response;
+//       }
+//       //if request is not cached, add it to cache
+//       return fetch(request).then(function(response) {
+//         var responseToCache = response.clone();
+//         caches.open(cacheName).then(
+//           function(cache) {
+//             cache.put(request, responseToCache).catch(function(err) {
+//               console.warn(request.url + ': ' + err.message);
+//             });
+//           });
+//         return response;
+//       });
+//     })
+//   );
+// });
+
+self.addEventListener('fetch', event => {
+    console.log('Handling fetch event for', event.request.url);
+    event.respondWith(
+      fetch(event.request).then(function(response) {
         var responseToCache = response.clone();
-        caches.open(cacheName).then(
-          function(cache) {
-            cache.put(request, responseToCache).catch(function(err) {
-              console.warn(request.url + ': ' + err.message);
-            });
-          });
-        return response;
-      });
-    })
-  );
+        console.log('Fetch from  newtwork');
+        caches.open(cacheName).then(function(cache) {
+        cache.put(event.request, responseToCache);
+        });
+                return response;
+      }).catch(error => {
+        console.log('returning offline page instead.', error);
+        return caches.match(event.request);
+      })
+    );
 });
 
 /*
